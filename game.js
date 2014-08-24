@@ -1,6 +1,10 @@
 
-function lerp( x, a, b ) {
+Math.lerp = function ( x, a, b ) {
     return a + x * ( b - a );
+}
+Math.approach = function( x, dist, inc ) {
+    if ( dist < x ) return Math.max( x - Math.abs( inc ), dist );
+    else return Math.min( x + Math.abs( inc ), dist );
 }
 
 window.onload = function() {
@@ -21,6 +25,7 @@ window.onload = function() {
         edges: [ [0, 2], [1, 2], [2, 3], [2, 4], [0, 1], [4, 3] ],
         playerStart0: 0,
         playerStart1: 3,
+        respawnRate: 4000
     };
 
     var planetGraph = new Graph();
@@ -28,7 +33,11 @@ window.onload = function() {
     var edgesGroup, shipsGroup, planetsGroup, uiGroup;
     var pausedSprite;
 
-    var ai = new AI( game, 1, planetGraph, sendShipFromPlanet );
+    var gameEvents = new GameEvents( game );
+
+    var ui = new UI( game, planetGraph, gameEvents );
+
+    var ai = new AI( game, 1, planetGraph, gameEvents );
 
 
     function preload() {
@@ -42,6 +51,9 @@ window.onload = function() {
         game.load.image('ring', 'assets/ring.png');
         game.load.image('ring-large', 'assets/ring-large.png');
         game.load.image('circle-large', 'assets/circle-large.png');
+        game.load.image('egg', 'assets/egg.png');
+
+        game.load.audio('galaxy', ['assets/galaxy.mp3']);
 
     }
 
@@ -59,6 +71,12 @@ window.onload = function() {
     function create() {
 
         game.stage.backgroundColor = 0x2B3E42;
+
+
+        game.scale.maxWidth = 1024;
+        game.scale.maxHeight = 768;
+        game.scale.pageAlignHorizontally = true;
+        game.scale.pageAlignVertically = true;
 
         edgesGroup = game.add.group();
         shipsGroup = game.add.group();
@@ -123,10 +141,14 @@ window.onload = function() {
 
         } );
 
-        gameEvents.create();
+        gameEvents.create( levelData.respawnRate );
+        ui.create();
+        ai.create();
 
-        ai.start();
-
+        var music = game.add.audio('galaxy');
+        music.loop = true;
+        music.play('');
+        window.music = music;
 
     }
 
@@ -139,130 +161,14 @@ window.onload = function() {
         } );
     }
 
-    function sendShipFromPlanet( planet, edge, attackStrength ) {
-        attackStrength = Math.min( attackStrength, planet.numEggs );
-        if ( attackStrength <= 0 ) return;
-
-        var ship = getPooledShip( planet.ownerId );
-        ship.attackStrength = attackStrength;
-        edge.addShipFromPlanet( ship, planet );
-        planet.setEggs( planet.numEggs - attackStrength );
-    }
 
     function GameEvents( game ) {
         this.game = game;
-        this.selectedPlanet = null;
-
-        this.timer = new Phaser.Timer( game );
-        this.clickTimer = new Phaser.Timer( game );
-
-        this.drag = false;
-        this.dragDist2 = 0;
-
 
     }
 
-    GameEvents.prototype.create = function() {
-
-        this.ring = game.add.sprite( 0, 0, 'ring-large' );
-        this.ring.anchor.set( 0.5, 0.5 );
-        this.ring.kill();
-        this.circle = game.add.sprite( 0, 0, 'circle-large' );
-        this.circle.anchor.set( 0.5, 0.5 );
-        this.circle.kill();
-        this.game.world.sendToBack( this.circle );
-
-
-        planetGraph.vertices.forEach( function( planet ) {
-            planet.events.onInputDown.add( this.onInputDown.bind( this, planet ) );
-        }, this );
-
-        planetGraph.vertices.forEach( function( planet ) {
-            planet.events.onInputUp.add( this.onInputUp.bind( this, planet ) );
-        }, this );
-
-        game.input.moveCallback = this.moveCallback.bind( this );
-
-        this.game.time.events.loop( 4000, this.spawnEggs, this );
-    };
-
-    var RING_WIDTH = 150;
-
-
-    GameEvents.prototype.moveCallback = function( pointer, x, y ) {
-
-        if ( !this.selectedPlanet || !this.drag ) return;
-
-        var dx = x - this.selectedPlanet.x;
-        var dy = y - this.selectedPlanet.y;
-
-        this.dragDist2 = dx * dx + dy * dy;
-
-        var dist = Math.sqrt( this.dragDist2 );
-        var radius = this.selectedPlanet.width / 2;
-        if ( dist > radius ) {
-
-            var percentage = this.percentage = Math.min( ( dist - radius ) / ( 80 - radius ), 1 );
-
-
-            this.ring.x = this.selectedPlanet.x;
-            this.ring.y = this.selectedPlanet.y;
-            this.ring.alpha = lerp( percentage, 0.2, 0.5 );
-            this.ring.width = lerp( percentage, 120, RING_WIDTH );
-            this.ring.height = this.ring.width;
-
-            this.ring.revive();
-
-
-            this.circle.alpha = 0.2;
-            this.circle.x = this.ring.x;
-            this.circle.y = this.ring.y;
-
-            this.circle.width = lerp( percentage, radius * 2, RING_WIDTH );
-            this.circle.height = this.circle.width;
-            this.circle.revive();
-
-
-        }
-
-    }
-
-    GameEvents.prototype.onInputDown = function( planet ) {
-        // this.clickTimer.start();
-
-        if ( this.selectedPlanet ) {
-            this.onSelectSecondPlanet( planet );
-        }
-        else if ( planet.ownerId !== null ) {
-            this.selectedPlanet = planet;
-            this.drag = true;
-
-        }
-
-    }
-    GameEvents.prototype.onInputUp = function() {
-
-        if ( !this.selectedPlanet || !this.drag ) return;
-
-        this.drag = false;
-
-        if ( this.dragDist2 <= Math.pow( this.selectedPlanet.width/2, 2 ) ) {
-            this.ring.x = this.selectedPlanet.x;
-            this.ring.y = this.selectedPlanet.y;
-            this.ring.alpha = 0.5;
-            this.ring.width = RING_WIDTH;
-            this.ring.height = RING_WIDTH;
-            this.ring.revive();
-
-            this.percentage = 1;
-
-            console.log( this.selectedPlanet );
-            // this.onSelectPlanet( this.selectedPlanet );
-
-        }
-        this.game.add.tween( this.circle )
-            .to( { alpha: 0 }, 200, Phaser.Easing.Cubic.InOut, true );
-
+    GameEvents.prototype.create = function( respawnRate ) {
+        this.game.time.events.loop( respawnRate, this.spawnEggs, this );
     }
 
     GameEvents.prototype.spawnEggs = function() {
@@ -277,51 +183,37 @@ window.onload = function() {
 
     };
 
-    GameEvents.prototype.onSelectSecondPlanet = function( planet ) {
-        if ( this.selectedPlanet == planet ) {
-            this.selectedPlanet = null;
-            this.hideRing();
-            return;
+    GameEvents.prototype.sendShipFromPlanet = function ( planet, edge, attackStrength ) {
+        attackStrength = Math.min( attackStrength, planet.numEggs );
+        if ( attackStrength <= 0 ) return;
+
+        var STRENGTH_PER_SHIP = 4;
+
+        function sendShip( availableStrength ) {
+
+            if ( availableStrength <= 0 ) return;
+
+            this.game.time.events.add( 200, function() {
+
+                var ship = getPooledShip( planet.ownerId );
+                ship.attackStrength = Math.min( availableStrength, STRENGTH_PER_SHIP );
+
+                edge.addShipFromPlanet( ship, planet );
+
+                sendShip( availableStrength - ship.attackStrength );
+            } );
         }
 
-        if ( this.selectedPlanet.numEggs == 0 ) {
-            return;
-        }
+        sendShip( attackStrength );
 
-        var attackStrength = Math.ceil( this.selectedPlanet.numEggs * this.percentage );
 
-        
-        var edge = planetGraph.getJoiningEdge( this.selectedPlanet, planet );
-        if ( !edge ) {
-            return;
-        }
-
-        sendShipFromPlanet( this.selectedPlanet, edge, attackStrength );
-
-        this.selectedPlanet = null;
-
-        this.hideRing();
+        planet.setEggs( planet.numEggs - attackStrength );
     }
 
-    GameEvents.prototype.hideRing = function() {
-        
-
-        this.game.add.tween( this.circle )
-            .to( { alpha: 0, width: 80, height: 80 }, 200, Phaser.Easing.Cubic.InOut, true );
-
-        var tween = this.game.add.tween( this.ring )
-            .to( { alpha: 0, width: 80, height: 80 }, 200, Phaser.Easing.Cubic.InOut, true );
-
-        tween.onComplete.add( function() {
-            this.ring.kill();
-        }, this );
 
 
-        this.dragDist2 = 0;
+    
 
-    }
-
-    var gameEvents = new GameEvents( game );
 
 
 };

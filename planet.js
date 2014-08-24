@@ -6,7 +6,7 @@ function Planet( game, x, y ) {
     this.captureOwnerId = null;
     this.captureValue = 0;
 
-    this.text = game.add.text( x, y, ' ', { font: 'bold 32px Michroma', fill: 'black' } );
+    this.text = game.add.text( x, y, ' ', { font: 'bold 20px Michroma', fill: 'black' } );
     this.text.alpha = 0.4;
     this.text.anchor.set( 0.5, 0.5 );
 
@@ -15,6 +15,7 @@ function Planet( game, x, y ) {
     this.middleCircle.alpha = 0.7;
 
     this.setCapturing( null );
+    this.eggSprites = [];
 }
 
 Planet.prototype = Object.create( Phaser.Sprite.prototype );
@@ -31,12 +32,22 @@ Planet.prototype.increaseCaptureValue = function( ownerId, value ) {
 
     this.captureValue += value;
 
-    if ( this.captureValue == 0 ) {
-        this.setCapturing( null );
+    if ( this.captureValue <= 0 ) {
 
-        this.game.add.tween( this.middleCircle ).to( {
+        var tween = this.game.add.tween( this.middleCircle );
+
+        tween.to( {
             width: 0, height: 0
         }, 200, Phaser.Easing.Quartic.Out, true );
+
+        if ( this.captureValue < 0 ) {
+            var newValue = -this.captureValue;
+            tween.onComplete.add( function() {
+                this.increaseCaptureValue( ownerId, newValue );
+            }, this );
+        }
+
+        this.setCapturing( null );
 
     } else {
 
@@ -96,10 +107,27 @@ Planet.prototype.hitFromShip = function( ship ) {
     else {
 
         if ( this.ownerId !== ship.ownerId ) {
-            this.setEggs( this.numEggs - attackStrength );
-            if ( this.numEggs <= 0 ) {
+            var newEggs = this.numEggs - attackStrength;
+            this.setEggs( newEggs );
+
+            if ( newEggs <= 0 ) {
                 this.setCapturing( ship.ownerId );
-                this.increaseCaptureValue( ship.ownerId, -this.numEggs + 1 )
+
+                this.middleCircle.alpha = 1;
+                this.middleCircle.width = this.width;
+                this.middleCircle.height = this.height;
+                this.middleCircle.revive();
+                var tween = this.game.add.tween( this.middleCircle );
+
+                tween.to( {
+                    width: 0, height: 0, alpha: 0.7
+                }, 200, Phaser.Easing.Quartic.Out, true );
+
+                // var newCapture = -this.numEggs + 1;
+                // tween.onComplete.add( function() {
+                //     this.increaseCaptureValue( ship.ownerId, newCapture );
+                // }, this );
+
             }
         } else {
             this.setEggs( this.numEggs + attackStrength );
@@ -121,16 +149,127 @@ Planet.prototype.setOwner = function( ownerId ) {
 
 Planet.prototype.setEggs = function( num ) {
 
-        var tween = this.game.add.tween( this.text ).to( {
-            alpha: 0
-        }, 200, Phaser.Easing.Quadratic.In, true );
-        tween.onComplete.add( function() {
-            this.text.text = num + "";
-        }, this );
+    num = Math.max( num, 0 );
 
-    tween.to( {
-        alpha: 0.4
-    }, 200, Phaser.Easing.Quadratic.Out, false, 0 );
+    // var tween = this.game.add.tween( this.text ).to( {
+    //     alpha: 0
+    // }, 200, Phaser.Easing.Quadratic.In, true );
+
+    // tween.onComplete.add( function() {
+    //     this.text.text = num + "";
+    // }, this );
+
+    // tween.to( {
+    //     alpha: 0.4
+    // }, 200, Phaser.Easing.Quadratic.Out, false, 0 );
+
+    var visualNum = Math.min( num, 40 );
+
+    for ( var i = 0; i < Math.max( this.eggSprites.length, visualNum ); i++ ) {
+        if ( i >= this.eggSprites.length ) {
+            var eggSprite = this.game.add.sprite(0, 0, 'egg');
+            eggSprite.anchor.set(0.5, 0.5);
+            eggSprite.width = 10; eggSprite.height = 10;
+            eggSprite.x = this.x; eggSprite.y = this.y;
+            eggSprite.tint = 0xD5E1DD;
+            this.eggSprites.push( eggSprite );
+        }
+        
+        var e = this.eggSprites[ i ];
+
+        if ( i >= visualNum ) {
+            this.game.add.tween( e ).to( {
+                alpha: 0
+            }, 200, Phaser.Easing.Linear.None, true);
+            continue;
+        }
+        e.revive()
+
+        var ring = function( i, maxRingSize, radius, offset ) {
+            i -= offset || 0;
+            if ( i < maxRingSize ) {
+                var ringSize = Math.min( maxRingSize, visualNum - ( offset || 0 ) );
+                var s = Math.sin( i / ringSize * Math.PI * 2 + Math.PI );
+                var c = Math.cos( i / ringSize * Math.PI * 2 + Math.PI );
+                this.game.add.tween( e ).to( {
+                    x: this.x + s * radius,
+                    y: this.y + c * radius,
+                }, 400, Phaser.Easing.Sinusoidal.InOut, true)
+
+                this.game.add.tween( e ).to( {
+                    alpha: 0.7
+                }, 200, Phaser.Easing.Linear.None, true);
+
+                return true;
+            }
+            return false;
+        }.bind( this );
+
+        if ( visualNum >= 21 ) {
+            ring( i, 1, 0 ) || ring( i, 20, 10, 1 ) || ring( i, Infinity, 19, 21 );
+        }
+        else if ( visualNum >= 17 ) {
+            ring( i, 1, 0 ) || ring( i, 5, 10, 1 ) || ring( i, Infinity, 19, 6 );
+        }
+        else if ( visualNum >= 16 ) {
+            ring( i, 5, 8 ) || ring( i, Infinity, 19, 5 );
+        }
+        else if ( visualNum >= 14 ) {
+            ring( i, 4, 8 ) || ring( i, Infinity, 18, 4 );
+        }
+        else if ( visualNum >= 11 ) {
+            ring( i, 3, 6 ) || ring( i, Infinity, 17, 3 );
+        }
+        else if ( visualNum >= 8 ) {
+            ring( i, 1, 0 ) || ring( i, Infinity, 14, 1 );
+        }
+        else if ( visualNum >= 6 ) {
+            ring( i, 1, 0 ) || ring( i, Infinity, 10, 1 );
+        }
+        else if ( visualNum > 1 ) {
+            ring( i, Infinity, 10 );
+        }
+        else if ( visualNum == 1 ) {
+            ring( i, Infinity, 0 );
+        }
+        // ring.call( this, i, 10, 10 );
+
+        // var ringSize = num;
+        // var radius = 0;
+
+        // if ( num > 1 && i >  ) {
+
+        // }
+
+
+        // if ( (num == 1 || num >= 6) && i == 0 ) {
+        //     this.game.add.tween( e ).to( {
+        //         x: this.x,
+        //         y: this.y,
+        //         alpha: 1
+        //     }, 800, Phaser.Easing.Elastic.Out, true)
+        // } else {
+        //     var ringSize = num;
+        //     var radius = 10;
+
+        //     if ( num >= 6 ) {
+        //         ringSize --;
+        //         radius += 2;
+        //     }
+        //     if ( num >= 10 ) radius += 5;
+        //     else if (num >= 6) radius += 2;
+        //     var s = Math.sin( i / ringSize * Math.PI * 2 + Math.PI );
+        //     var c = Math.cos( i / ringSize * Math.PI * 2 + Math.PI );
+        //     this.game.add.tween( e ).to( {
+        //         x: this.x + s * radius,
+        //         y: this.y + c * radius,
+        //     }, 800, Phaser.Easing.Elastic.Out, true)
+
+        //     this.game.add.tween( e ).to( {
+        //         alpha: 1
+        //     }, 200, Phaser.Easing.Linear.None, true);
+        // }
+    }
 
     this.numEggs = num;
 

@@ -1,11 +1,12 @@
-function AI( game, ownerId, planetGraph, sendShipFromPlanet ) {
+function AI( game, ownerId, planetGraph, gameEvents ) {
     this.game = game;
     this.ownerId = ownerId;
     this.planetGraph = planetGraph;
-    this.sendShipFromPlanet = sendShipFromPlanet;
+    this.gameEvents = gameEvents;
+    this.delayRamp = 1000;
 }
 
-AI.prototype.start = function() {
+AI.prototype.create = function() {
     // this.timer = new Phaser.Timer( this.game );
     this.game.time.events.add( 1000, function() {
         this.tick();
@@ -29,7 +30,7 @@ AI.prototype.tick = function() {
             sendToPlanets = localNeighbours
         }
 
-        var attackStrength = Math.floor( planet.numEggs / sendToPlanets.length );
+        var attackStrength = Math.floor( planet.numEggs * 0.8 / sendToPlanets.length );
         if ( attackStrength > 0 ) {
             _.forEach( sendToPlanets, function( neighbour, i ) {
                 
@@ -37,10 +38,11 @@ AI.prototype.tick = function() {
 
                     var edge = this.planetGraph.getJoiningEdge( planet, neighbour );
 
-                    this.sendShipFromPlanet( planet, edge, attackStrength );
+                    this.gameEvents.sendShipFromPlanet( planet, edge, attackStrength );
                 }, this );
 
-                delay += 200;
+                delay += this.delayRamp + Math.random() * 100;
+                this.delayRamp = Math.approach( this.delayRamp, 200, 100 );
                 
             }, this );
 

@@ -1,0 +1,17 @@
+
+FEATURES
+
+- win + lose screen
+- splash screen
+- multiple levels
+- hover visuals on planets
+- a way of knowing how many eggs to send
+- sounds
+- music
+- collisions
+
+BUG FIXES
+
+- Capture values going negative
+- Egg values going negative
+- change owner after clicking
