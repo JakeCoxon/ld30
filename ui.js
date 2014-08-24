@@ -37,9 +37,10 @@ UI.prototype.create = function() {
 
 UI.prototype.setupPauseMenu = function() { 
 
-    var pausedSprite = this.gameplay.uiGroup.add( new Phaser.Sprite( this.game, 0, 0, "line" ) );
+    var pausedSprite = this.gameplay.uiGroup.add( new Phaser.Sprite( this.game, 0, 0, 'solid' ) );
     pausedSprite.width = 800;
     pausedSprite.height = 600;
+    pausedSprite.tint = 0x02B3E42;
     pausedSprite.alpha = 0.6;
 
     pausedSprite.kill();

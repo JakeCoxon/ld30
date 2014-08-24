@@ -52,13 +52,23 @@ Gameplay.prototype.create = function() {
 
     window.levelEdit = function() {
         var str = ""
+
         _.forEach( this.planetGraph.vertices, function( planet ) {
+
+            planet.events.onInputDown.add( function() {
+                console.log( this.planetId, Math.round( planet.x * 100 ) / 100, Math.round( planet.y * 100 ) / 100 );
+            }, planet );
+
             planet.input.enableDrag();
+
             str += "{ x: " 
                  + Math.round( planet.x * 100 ) / 100 + ", y: "
                  + Math.round( planet.y * 100 ) / 100 + " },\n"
+
         } );
+        
         console.log( str );
+
     }.bind( this );
 
     _.forEach( levelData.starting, function( tuple, planetId ) {

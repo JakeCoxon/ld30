@@ -30,9 +30,11 @@ MainMenu.prototype.create = function() {
 
     var mainPlanet = this.mainPlanet = centerAnchor( this.game.add.sprite( 800 / 2, 600 / 2, 'player0' ) );
     mainPlanet.inputEnabled = true;
+    mainPlanet.input.useHandCursor = true;
 
     var secondPlanet = this.secondPlanet = centerAnchor( this.game.add.sprite( 800 / 2 + 300, 600 / 2, 'planet' ) );
     secondPlanet.inputEnabled = true;
+    secondPlanet.input.useHandCursor = true;
     secondPlanet.kill();
 
 
