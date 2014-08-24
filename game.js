@@ -25,7 +25,9 @@ window.onload = function() {
 
     var planetGraph = new Graph();
 
-    var edgesGroup, shipsGroup, planetsGroup;
+    var edgesGroup, shipsGroup, planetsGroup, uiGroup;
+    var pausedSprite;
+
     var ai = new AI( game, 1, planetGraph, sendShipFromPlanet );
 
 
@@ -61,6 +63,23 @@ window.onload = function() {
         edgesGroup = game.add.group();
         shipsGroup = game.add.group();
         planetsGroup = game.add.group();
+        uiGroup = game.add.group();
+
+        pausedSprite = uiGroup.add( new Phaser.Sprite( game, 0, 0, "line" ) );
+        pausedSprite.width = 800;
+        pausedSprite.height = 600;
+        pausedSprite.alpha = 0.6;
+
+        pausedSprite.kill();
+
+        game.onPause.add( function() {
+            pausedSprite.revive();
+            game.world.bringToTop( uiGroup );
+            uiGroup.bringToTop( pausedSprite );
+        } );
+        game.onResume.add( function() {
+            pausedSprite.kill();
+        } );
 
 
         window.planets = _.map( levelData.positions, function( planetPosition, i ) {
