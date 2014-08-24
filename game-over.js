@@ -4,6 +4,12 @@ function GameOver() {
 
 GameOver.prototype.create = function() {
 
+    // var ring = this.ring = centerAnchor( this.game.add.sprite( 800 / 2, 600 / 2, 'ring-large' ) );
+    // ring.anchor.set( 0.5, 0.5 );
+    // ring.width = 80;
+    // ring.height = 80;
+    // ring.kill();
+
     var planet = this.planet = this.game.add.sprite( 800 / 2, 600 / 2, this.win ? 'player0' : 'player1' );
     planet.anchor.set( 0.5, 0.5 );
     planet.inputEnabled = true;

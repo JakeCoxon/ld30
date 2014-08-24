@@ -13,22 +13,17 @@ function Planet( game, x, y ) {
     this.middleCircle = game.add.sprite( x, y, 'planet' );
     this.middleCircle.anchor.set( 0.5, 0.5 );
     this.middleCircle.alpha = 0.7;
+    
+    this.events.ownerChanged = new Phaser.Signal();
 
     this.setCapturing( null );
     this.eggSprites = [];
 
-    this.events.ownerChanged = new Phaser.Signal();
 }
 
 Planet.prototype = Object.create( Phaser.Sprite.prototype );
 Planet.prototype.constructor = Planet;
 
-Planet.prototype.setCapturing = function( ownerId ) {
-    this.ownerId = null;
-    this.captureOwnerId = ownerId;
-    this.captureValue = 0;
-    this.loadTexture( 'planet' );
-};
 Planet.prototype.increaseCaptureValue = function( ownerId, value ) {
     var wasZero = this.captureValue == 0;
 
@@ -125,10 +120,10 @@ Planet.prototype.hitFromShip = function( ship ) {
                     width: 0, height: 0, alpha: 0.7
                 }, 200, Phaser.Easing.Quartic.Out, true );
 
-                // var newCapture = -this.numEggs + 1;
-                // tween.onComplete.add( function() {
-                //     this.increaseCaptureValue( ship.ownerId, newCapture );
-                // }, this );
+                var newCapture = -this.numEggs + 1;
+                tween.onComplete.add( function() {
+                    this.increaseCaptureValue( ship.ownerId, newCapture );
+                }, this );
 
             }
         } else {
@@ -147,6 +142,13 @@ Planet.prototype.setOwner = function( ownerId ) {
     this.setEggs( 0 );
     this.middleCircle.kill();
     this.loadTexture( 'player' + ownerId );
+    this.events.ownerChanged.dispatch( this );
+};
+Planet.prototype.setCapturing = function( ownerId ) {
+    this.ownerId = null;
+    this.captureOwnerId = ownerId;
+    this.captureValue = 0;
+    this.loadTexture( 'planet' );
     this.events.ownerChanged.dispatch( this );
 };
 
