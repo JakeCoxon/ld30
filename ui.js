@@ -1,8 +1,9 @@
 
-function UI( game, planetGraph, gameEvents ) {
+function UI( game, gameplay ) {
     this.game = game;
-    this.planetGraph = planetGraph;
-    this.gameEvents = gameEvents;
+    this.gameplay = gameplay;
+    this.planetGraph = gameplay.planetGraph;
+    this.gameEvents = gameplay.gameEvents;
     // this.clickTimer = new Phaser.Timer( game );
 
     this.drag = false;
@@ -11,10 +12,12 @@ function UI( game, planetGraph, gameEvents ) {
 
 UI.prototype.create = function() {
 
-    this.ring = game.add.sprite( 0, 0, 'ring-large' );
+    this.setupPauseMenu();
+
+    this.ring = this.game.add.sprite( 0, 0, 'ring-large' );
     this.ring.anchor.set( 0.5, 0.5 );
     this.ring.kill();
-    this.circle = game.add.sprite( 0, 0, 'circle-large' );
+    this.circle = this.game.add.sprite( 0, 0, 'circle-large' );
     this.circle.anchor.set( 0.5, 0.5 );
     this.circle.kill();
     this.game.world.sendToBack( this.circle );
@@ -31,6 +34,27 @@ UI.prototype.create = function() {
     this.game.input.moveCallback = this.moveCallback.bind( this );
 
 };
+
+UI.prototype.setupPauseMenu = function() { 
+
+    var pausedSprite = this.gameplay.uiGroup.add( new Phaser.Sprite( this.game, 0, 0, "line" ) );
+    pausedSprite.width = 800;
+    pausedSprite.height = 600;
+    pausedSprite.alpha = 0.6;
+
+    pausedSprite.kill();
+
+    this.game.onPause.add( function() {
+        pausedSprite.revive();
+        this.game.world.bringToTop( this.gameplay.uiGroup );
+        this.gameplay.uiGroup.bringToTop( pausedSprite );
+    }, this );
+
+    this.game.onResume.add( function() {
+        pausedSprite.kill();
+    }, this );
+
+}
 
 
 
@@ -104,7 +128,7 @@ UI.prototype.onInputUp = function() {
 
         this.percentage = 0.5;
 
-        console.log( this.selectedPlanet );
+        // console.log( this.selectedPlanet );
         // this.onSelectPlanet( this.selectedPlanet );
 
     }

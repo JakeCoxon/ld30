@@ -12,6 +12,13 @@ FEATURES
 
 BUG FIXES
 
-- Capture values going negative
-- Egg values going negative
-- change owner after clicking
+- capturing sometimes doesn't work correctly
+- change owner after selecting
+
+NOTES
+
+- bg color #2B3E42
+- red color #F2583E
+- blue color #60C0DB
+- white color #D5E1DD
+- grey color #747E80
