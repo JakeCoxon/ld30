@@ -15,6 +15,7 @@ window.onload = function() {
             game.state.add( 'preloader', Preloader );
             game.state.add( 'main-menu', MainMenu );
             game.state.add( 'gameplay', Gameplay );
+            game.state.add( 'game-over', GameOver );
 
             game.state.start( 'preloader' );
         }

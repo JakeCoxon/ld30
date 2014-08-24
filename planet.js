@@ -6,9 +6,9 @@ function Planet( game, x, y ) {
     this.captureOwnerId = null;
     this.captureValue = 0;
 
-    this.text = game.add.text( x, y, ' ', { font: 'bold 20px Michroma', fill: 'black' } );
-    this.text.alpha = 0.4;
-    this.text.anchor.set( 0.5, 0.5 );
+    // this.text = game.add.text( x, y, ' ', { font: 'bold 20px Michroma', fill: 'black' } );
+    // this.text.alpha = 0.4;
+    // this.text.anchor.set( 0.5, 0.5 );
 
     this.middleCircle = game.add.sprite( x, y, 'planet' );
     this.middleCircle.anchor.set( 0.5, 0.5 );
@@ -16,6 +16,8 @@ function Planet( game, x, y ) {
 
     this.setCapturing( null );
     this.eggSprites = [];
+
+    this.events.ownerChanged = new Phaser.Signal();
 }
 
 Planet.prototype = Object.create( Phaser.Sprite.prototype );
@@ -145,6 +147,7 @@ Planet.prototype.setOwner = function( ownerId ) {
     this.setEggs( 0 );
     this.middleCircle.kill();
     this.loadTexture( 'player' + ownerId );
+    this.events.ownerChanged.dispatch( this );
 };
 
 Planet.prototype.setEggs = function( num ) {
@@ -166,11 +169,15 @@ Planet.prototype.setEggs = function( num ) {
     var visualNum = Math.min( num, 40 );
 
     for ( var i = 0; i < Math.max( this.eggSprites.length, visualNum ); i++ ) {
+
         if ( i >= this.eggSprites.length ) {
-            var eggSprite = this.game.add.sprite(0, 0, 'egg');
-            eggSprite.anchor.set(0.5, 0.5);
-            eggSprite.width = 10; eggSprite.height = 10;
-            eggSprite.x = this.x; eggSprite.y = this.y;
+
+            var eggSprite = this.game.add.sprite( 0, 0, 'egg' );
+            eggSprite.anchor.set( 0.5, 0.5 );
+            eggSprite.width = 10; 
+            eggSprite.height = 10;
+            eggSprite.x = this.x; 
+            eggSprite.y = this.y;
             eggSprite.tint = 0xD5E1DD;
             this.eggSprites.push( eggSprite );
         }
@@ -232,43 +239,7 @@ Planet.prototype.setEggs = function( num ) {
         else if ( visualNum == 1 ) {
             ring( i, Infinity, 0 );
         }
-        // ring.call( this, i, 10, 10 );
 
-        // var ringSize = num;
-        // var radius = 0;
-
-        // if ( num > 1 && i >  ) {
-
-        // }
-
-
-        // if ( (num == 1 || num >= 6) && i == 0 ) {
-        //     this.game.add.tween( e ).to( {
-        //         x: this.x,
-        //         y: this.y,
-        //         alpha: 1
-        //     }, 800, Phaser.Easing.Elastic.Out, true)
-        // } else {
-        //     var ringSize = num;
-        //     var radius = 10;
-
-        //     if ( num >= 6 ) {
-        //         ringSize --;
-        //         radius += 2;
-        //     }
-        //     if ( num >= 10 ) radius += 5;
-        //     else if (num >= 6) radius += 2;
-        //     var s = Math.sin( i / ringSize * Math.PI * 2 + Math.PI );
-        //     var c = Math.cos( i / ringSize * Math.PI * 2 + Math.PI );
-        //     this.game.add.tween( e ).to( {
-        //         x: this.x + s * radius,
-        //         y: this.y + c * radius,
-        //     }, 800, Phaser.Easing.Elastic.Out, true)
-
-        //     this.game.add.tween( e ).to( {
-        //         alpha: 1
-        //     }, 200, Phaser.Easing.Linear.None, true);
-        // }
     }
 
     this.numEggs = num;

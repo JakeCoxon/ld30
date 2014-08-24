@@ -3,23 +3,15 @@ function Gameplay() {
 
 }
 
-var levelData = {
-    positions: [
-        { x: 148.13420958071947, y: 463.00298454239964 },
-        { x: 548.0702181458473, y: 400.50939767062664 },
-        { x: 399.276088565588, y: 286.9718343168497 },
-        { x: 661.5447843521833, y: 104.6057182662189 },
-        { x: 280.08115224540234, y: 151.6812285091728 } 
-    ],
-    edges: [ [0, 2], [1, 2], [2, 3], [2, 4], [0, 1], [4, 3] ],
-    playerStart0: 0,
-    playerStart1: 3,
-    respawnRate: 4000,
-    starting: { 0: [0, 5], 3: [1, 5] }
-};
+
 
 Gameplay.prototype.create = function() {
 
+    this.gameStarted = false;
+
+    this.levelId = this.levelId || 0;
+
+    var levelData = Levels[ this.levelId ];
     var planetGraph = this.planetGraph = new Graph();
 
     this.gameEvents = new GameEvents( this.game, this );
@@ -48,14 +40,26 @@ Gameplay.prototype.create = function() {
 
         planet.inputEnabled = true;
         planet.input.useHandCursor = true;
-        
-        // planet.input.enableDrag();
 
+        planet.events.ownerChanged.add( this.planetOwnerChanged, this );
+        
         this.planetGraph.addVertex( planet );
 
         return planet;
 
     }, this );
+
+
+    window.levelEdit = function() {
+        var str = ""
+        _.forEach( this.planetGraph.vertices, function( planet ) {
+            planet.input.enableDrag();
+            str += "{ x: " 
+                 + Math.round( planet.x * 100 ) / 100 + ", y: "
+                 + Math.round( planet.y * 100 ) / 100 + " },\n"
+        } );
+        console.log( str );
+    }.bind( this );
 
     _.forEach( levelData.starting, function( tuple, planetId ) {
 
@@ -81,14 +85,29 @@ Gameplay.prototype.create = function() {
 
     this.gameEvents.create( levelData.respawnRate );
     this.ui.create();
-    
+
     _.forEach( this.ais, function( ai ) { ai.create() } );
 
-    var music = this.game.add.audio('galaxy');
-    music.loop = true;
-    music.play('');
-    window.music = music;
+    this.gameStarted = true;
 
+}
+
+Gameplay.prototype.planetOwnerChanged = function() {
+    if ( !this.gameStarted ) return;
+
+    var win = _.all( this.planetGraph.vertices, function( planet ) {
+        return planet.ownerId === 0 || planet.ownerId === null;
+    } );
+
+    var lose = _.all( this.planetGraph.vertices, function( planet ) {
+        return planet.ownerId !== 0;
+    } );
+
+    if ( win || lose ) {
+        this.game.state.states[ 'game-over' ].win = win;
+        this.game.state.states[ 'game-over' ].levelId = this.levelId;
+        this.game.state.start( 'game-over' );
+    }
 }
 
 Gameplay.prototype.getPooledShip = function( ownerId ) {
@@ -110,6 +129,7 @@ Gameplay.prototype.update = function() {
 
     } );
 }
+
 
 
 function GameEvents( game, gameplay ) {

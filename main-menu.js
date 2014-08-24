@@ -126,6 +126,9 @@ MainMenu.prototype.create = function() {
 
     this.secondPlanet.events.onInputDown.add( function() {
 
+        if ( this.splashState != 1 ) return;
+
+        this.splashState = 2;
         ship.revive();
 
         this.game.add.tween( mainPlanet ).to( {
@@ -144,7 +147,6 @@ MainMenu.prototype.create = function() {
 
     }, this )
 
-    window.game = this.game;
 }
 
 
@@ -155,7 +157,7 @@ MainMenu.prototype.update = function() {
         planet.y = this.mainPlanet.y + Math.cos( planet.angle ) * planet.dist;
 
 
-        planet.angle += planet.speed * ( this.splashState == 1 ? 0.1 : 1 );
+        planet.angle += planet.speed * ( this.splashState == 0 ? 1 : 0.1 );
 
     }, this );
 

@@ -103,7 +103,7 @@ UI.prototype.onInputDown = function( planet ) {
     if ( this.selectedPlanet ) {
         this.onSelectSecondPlanet( planet );
     }
-    else if ( planet.ownerId !== null ) {
+    else if ( planet.ownerId === 0 ) {
         this.selectedPlanet = planet;
         this.drag = true;
 

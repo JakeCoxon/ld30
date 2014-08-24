@@ -26,6 +26,11 @@ Preloader.prototype.create = function() {
     
     this.game.stage.backgroundColor = 0x2B3E42;
 
-    this.game.state.start('main-menu');
+    this.game.state.start('gameplay');
+
+    var music = this.game.add.audio('galaxy');
+    music.loop = true;
+    music.play('');
+    window.music = music;
 
 }
