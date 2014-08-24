@@ -26,6 +26,7 @@ window.onload = function() {
     var planetGraph = new Graph();
 
     var edgesGroup, shipsGroup, planetsGroup;
+    var ai = new AI( game, 1, planetGraph, sendShipFromPlanet );
 
 
     function preload() {
@@ -105,6 +106,8 @@ window.onload = function() {
 
         gameEvents.create();
 
+        ai.start();
+
 
     }
 
@@ -115,6 +118,16 @@ window.onload = function() {
             edge.update();
 
         } );
+    }
+
+    function sendShipFromPlanet( planet, edge, attackStrength ) {
+        attackStrength = Math.min( attackStrength, planet.numEggs );
+        if ( attackStrength <= 0 ) return;
+
+        var ship = getPooledShip( planet.ownerId );
+        ship.attackStrength = attackStrength;
+        edge.addShipFromPlanet( ship, planet );
+        planet.setEggs( planet.numEggs - attackStrength );
     }
 
     function GameEvents( game ) {
@@ -258,18 +271,13 @@ window.onload = function() {
 
         var attackStrength = Math.ceil( this.selectedPlanet.numEggs * this.percentage );
 
-        this.selectedPlanet.setEggs( this.selectedPlanet.numEggs - attackStrength );
         
         var edge = planetGraph.getJoiningEdge( this.selectedPlanet, planet );
         if ( !edge ) {
             return;
         }
 
-        var edgeVertices = planetGraph.getIncidentVertices( edge );
-
-        var ship = getPooledShip( this.selectedPlanet.ownerId );
-        ship.attackStrength = attackStrength;
-        edge.addShipFromPlanet( ship, this.selectedPlanet );
+        sendShipFromPlanet( this.selectedPlanet, edge, attackStrength );
 
         this.selectedPlanet = null;
 
