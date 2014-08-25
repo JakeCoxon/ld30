@@ -4,6 +4,7 @@ function AI( game, ownerId, planetGraph, gameEvents ) {
     this.planetGraph = planetGraph;
     this.gameEvents = gameEvents;
     this.delayRamp = 1000;
+    this.playing = true;
 }
 
 AI.prototype.create = function() {
@@ -14,7 +15,14 @@ AI.prototype.create = function() {
     // this.timer.start();
 }
 
+AI.prototype.stop = function() {
+    this.playing = false;
+}
+
 AI.prototype.tick = function() {
+    if ( !this.playing ) return;
+
+    
     var ownedPlanets = _.filter( this.planetGraph.vertices, function( planet ) {
         return planet.ownerId == this.ownerId; 
     }, this );

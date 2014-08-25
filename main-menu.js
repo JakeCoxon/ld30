@@ -6,6 +6,8 @@ MainMenu.prototype.create = function() {
 
     this.splashState = 0;
 
+    this.startTime = this.game.time.now;
+
     function centerAnchor( sprite ) {
         sprite.anchor.set( 0.5, 0.5 );
         return sprite;
@@ -61,10 +63,14 @@ MainMenu.prototype.create = function() {
 
 
     var fill = this.game.add.sprite( 0, 0, 'solid' );
+    fill.alpha = 1;
     fill.tint = 0x2B3E42;
     fill.width = 800;
     fill.height = 600;
-    fill.kill();
+
+    this.game.add.tween( fill ).to( {
+        alpha: 0
+    }, 1000, Phaser.Easing.Linear.None, true );
 
     
 
@@ -164,11 +170,12 @@ MainMenu.prototype.update = function() {
     }, this );
 
 
+    var timerSine = Math.sin( ( this.game.time.now - this.startTime ) / 1000 ) * 0.5 + 0.5;
     if ( this.splashState == 0 ) {
-        this.mainPlanet.width = Math.lerp( Math.sin( this.game.time.now / 1000 ) * 0.5 + 0.5, 80, 100 );
+        this.mainPlanet.width = Math.lerp( timerSine, 80, 100 );
         this.mainPlanet.height = this.mainPlanet.width;
     } else {
-        this.secondPlanet.width = Math.lerp( Math.sin( this.game.time.now / 1000 ) * 0.5 + 0.5, 80, 100 );
+        this.secondPlanet.width = Math.lerp( timerSine, 80, 100 );
         this.secondPlanet.height = this.secondPlanet.width;
     }
 

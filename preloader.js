@@ -19,6 +19,10 @@ Preloader.prototype.preload = function() {
     this.game.load.image('solid', 'assets/solid.png');
 
     this.game.load.audio('galaxy', ['assets/galaxy.mp3']);
+    this.game.load.audio('shh', ['assets/shh.wav']);
+    this.game.load.audio('bop', ['assets/bop.wav']);
+    this.game.load.audio('tss', ['assets/tss.wav']);
+    this.game.load.audio('bump', ['assets/bump.wav']);
     
 }
 
@@ -26,7 +30,7 @@ Preloader.prototype.create = function() {
     
     this.game.stage.backgroundColor = 0x2B3E42;
 
-    this.game.state.start('gameplay');
+    this.game.state.start('main-menu');
 
     var music = this.game.add.audio('galaxy');
     music.loop = true;

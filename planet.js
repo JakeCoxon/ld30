@@ -1,7 +1,9 @@
 var MAX_CAPTURE = 5;
 
-function Planet( game, x, y ) {
+function Planet( game, x, y, planetsGroup ) {
     Phaser.Sprite.call( this, game, x, y, 'planet' );
+
+    this.planetsGroup = planetsGroup;
     this.ownerId = null;
     this.captureOwnerId = null;
     this.captureValue = 0;
@@ -10,11 +12,15 @@ function Planet( game, x, y ) {
     // this.text.alpha = 0.4;
     // this.text.anchor.set( 0.5, 0.5 );
 
-    this.middleCircle = game.add.sprite( x, y, 'planet' );
+    this.middleCircle = planetsGroup.add( new Phaser.Sprite( this.game, x, y, 'planet' ) );
     this.middleCircle.anchor.set( 0.5, 0.5 );
     this.middleCircle.alpha = 0.7;
-    
+
     this.events.ownerChanged = new Phaser.Signal();
+
+    this.goodSound = this.game.add.audio( 'bop' );
+    this.badSound = this.game.add.audio( 'bump' );
+    this.attackSound = this.game.add.audio( 'shh' );
 
     this.setCapturing( null );
     this.eggSprites = [];
@@ -45,6 +51,7 @@ Planet.prototype.increaseCaptureValue = function( ownerId, value ) {
         }
 
         this.setCapturing( null );
+        this.attackSound.play();
 
     } else {
 
@@ -60,7 +67,7 @@ Planet.prototype.increaseCaptureValue = function( ownerId, value ) {
             this.middleCircle.revive();
         }
 
-        this.game.world.bringToTop( this.middleCircle );
+        this.planetsGroup.bringToTop( this.middleCircle );
 
         var middleCircleWidth = Math.min( this.captureValue / MAX_CAPTURE, 1 ) * this.width;
         this.game.add.tween( this.middleCircle ).to( {
@@ -68,6 +75,12 @@ Planet.prototype.increaseCaptureValue = function( ownerId, value ) {
         }, 200, Phaser.Easing.Quartic.Out, true );
 
         if ( this.captureValue >= MAX_CAPTURE ) {
+
+            if ( ownerId === 0 ) {
+                this.goodSound.play();
+            } else {
+                this.badSound.play();
+            }
 
             var tween = this.game.add.tween( this.middleCircle ).to( {
                 alpha: 1,
@@ -80,8 +93,9 @@ Planet.prototype.increaseCaptureValue = function( ownerId, value ) {
                 this.setEggs( this.numEggs + add );
             }, this );
 
+        } else {
+            this.attackSound.play();
         }
-
 
     }
 };
@@ -110,6 +124,12 @@ Planet.prototype.hitFromShip = function( ship ) {
             if ( newEggs <= 0 ) {
                 this.setCapturing( ship.ownerId );
 
+                if ( ship.ownerId === 0 ) {
+                    this.goodSound.play();
+                } else {
+                    this.badSound.play();
+                }
+
                 this.middleCircle.alpha = 1;
                 this.middleCircle.width = this.width;
                 this.middleCircle.height = this.height;
@@ -125,9 +145,12 @@ Planet.prototype.hitFromShip = function( ship ) {
                     this.increaseCaptureValue( ship.ownerId, newCapture );
                 }, this );
 
+            } else {
+                this.attackSound.play();
             }
         } else {
             this.setEggs( this.numEggs + attackStrength );
+            this.attackSound.play();
         }
     }
 
@@ -141,7 +164,9 @@ Planet.prototype.setOwner = function( ownerId ) {
     this.ownerId = ownerId;
     this.setEggs( 0 );
     this.middleCircle.kill();
-    this.loadTexture( 'player' + ownerId );
+    if ( ownerId !== null ) {
+        this.loadTexture( 'player' + ownerId );
+    }
     this.events.ownerChanged.dispatch( this );
 };
 Planet.prototype.setCapturing = function( ownerId ) {
@@ -174,7 +199,7 @@ Planet.prototype.setEggs = function( num ) {
 
         if ( i >= this.eggSprites.length ) {
 
-            var eggSprite = this.game.add.sprite( 0, 0, 'egg' );
+            var eggSprite = this.planetsGroup.add( new Phaser.Sprite( this.game, 0, 0, 'egg' ) );
             eggSprite.anchor.set( 0.5, 0.5 );
             eggSprite.width = 10; 
             eggSprite.height = 10;

@@ -23,6 +23,17 @@ UI.prototype.create = function() {
     this.game.world.sendToBack( this.circle );
 
 
+    var fill = this.fill = this.game.add.sprite( 0, 0, 'solid' );
+    fill.alpha = 1;
+    fill.tint = 0x2B3E42;
+    fill.width = 800;
+    fill.height = 600;
+
+    this.game.add.tween( fill ).to( {
+        alpha: 0
+    }, 500, Phaser.Easing.Linear.None, true );
+
+
     this.planetGraph.vertices.forEach( function( planet ) {
         planet.events.onInputDown.add( this.onInputDown.bind( this, planet ) );
     }, this );
@@ -37,23 +48,13 @@ UI.prototype.create = function() {
 
 UI.prototype.setupPauseMenu = function() { 
 
-    var pausedSprite = this.gameplay.uiGroup.add( new Phaser.Sprite( this.game, 0, 0, 'solid' ) );
+    var pausedSprite = this.pausedSprite = this.gameplay.uiGroup.add( new Phaser.Sprite( this.game, 0, 0, 'solid' ) );
     pausedSprite.width = 800;
     pausedSprite.height = 600;
     pausedSprite.tint = 0x02B3E42;
     pausedSprite.alpha = 0.6;
 
     pausedSprite.kill();
-
-    this.game.onPause.add( function() {
-        pausedSprite.revive();
-        this.game.world.bringToTop( this.gameplay.uiGroup );
-        this.gameplay.uiGroup.bringToTop( pausedSprite );
-    }, this );
-
-    this.game.onResume.add( function() {
-        pausedSprite.kill();
-    }, this );
 
 }
 
